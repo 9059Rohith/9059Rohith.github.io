@@ -1,3 +1,4 @@
+import { ScrollBackdrop, useScrollBackdrops } from "./ScrollBackdrop";
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { ArrowRight, ArrowUpRight, Menu, X, Search } from "lucide-react";
@@ -11,6 +12,7 @@ import "./style.css";
 import "./studio.css";
 import "./atlas.css";
 import "./motion.css";
+import "./backgrounds.css";
 import CoffeeFooter from "./CoffeeFooter";
 import { ArchitectureLoading, usePortfolioMotion } from "./PortfolioMotion";
 const Architecture = lazy(() => import("./ArchitectureGuide")),
@@ -136,6 +138,7 @@ function Intelligence() {
   const [i, set] = useState(4);
   return (
     <section className="section editorial">
+      <ScrollBackdrop motif="ribbon" tone="dark" reverse />
       <div>
         <div className="kicker">AI systems</div>
         <h2>
@@ -219,6 +222,7 @@ function Others() {
   );
   return (
     <section className="section compact">
+      <ScrollBackdrop motif="orbit" tone="dark" />
       <div className="section-title">
         <h2>Other Projects</h2>
         <label className="search">
@@ -253,6 +257,7 @@ function Others() {
 function About() {
   return (
     <section className="section editorial" id="about">
+      <ScrollBackdrop motif="terrain" tone="dark" reverse />
       <div>
         <div className="kicker">About Rohith</div>
         <h2>
@@ -282,6 +287,7 @@ function About() {
 function Education() {
   return (
     <section className="section compact">
+      <ScrollBackdrop motif="lattice" tone="dark" reverse />
       <h2>Education</h2>
       {[
         [
@@ -312,6 +318,7 @@ function Education() {
 function Research() {
   return (
     <section className="section research">
+      <ScrollBackdrop motif="rings" tone="paper" />
       <div className="kicker">Research & achievements</div>
       <h2>
         Looking inside <em>the model.</em>
@@ -362,6 +369,7 @@ function Research() {
 function Footer() {
   return (
     <footer id="contact">
+      <ScrollBackdrop motif="orbit" tone="dark" />
       <div className="coffee-closing">
         <div className="closing-copy">
           <div className="kicker">
@@ -419,6 +427,7 @@ function Home() {
       <Intelligence />
       <SignalLab />
       <section className="section compact">
+        <ScrollBackdrop motif="circuit" tone="dark" />
         <div className="kicker">Technical deep dives</div>
         <h2>Engineering decisions.</h2>
         {projects.map((p) => (
@@ -450,6 +459,7 @@ function Case({ p }: { p: Project }) {
     <>
       <CasePoster p={p} />
       <section className="section case">
+        <ScrollBackdrop motif="lattice" tone="paper" />
         <div className="facts">
           <div>
             <small>Contribution</small>
@@ -476,6 +486,7 @@ function Case({ p }: { p: Project }) {
         <Architecture initial={p} />
       </Suspense>
       <div className="section next">
+        <ScrollBackdrop motif="orbit" tone="paper" reverse />
         <a href={"/projects/" + projects[(projects.indexOf(p) + 1) % 4].id}>
           Next case study · {projects[(projects.indexOf(p) + 1) % 4].name}{" "}
           <ArrowRight />
@@ -486,6 +497,7 @@ function Case({ p }: { p: Project }) {
 }
 function App() {
   usePortfolioMotion();
+  useScrollBackdrops();
   const id = location.pathname.split("/")[2];
   const p = projects.find((q) => id === q.id);
   useEffect(() => {

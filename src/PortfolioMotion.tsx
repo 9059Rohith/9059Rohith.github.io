@@ -1,3 +1,4 @@
+import { ScrollBackdrop } from "./ScrollBackdrop";
 import { useEffect, useId } from "react";
 
 /** Use real viewport entry for chapter motion, including sections added by a lazy import. */
@@ -54,6 +55,7 @@ export function ArchitectureLoading() {
       role="status"
       aria-labelledby={id}
     >
+      <ScrollBackdrop motif="lattice" tone="paper" />
       <div className="loading-net" aria-hidden="true">
         <span />
         <i />

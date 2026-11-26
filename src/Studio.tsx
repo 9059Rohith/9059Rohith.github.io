@@ -1,3 +1,4 @@
+import { ScrollBackdrop } from "./ScrollBackdrop";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
@@ -256,7 +257,9 @@ export function StudioHero() {
         </div>
         <div className="bench-cup-poster" aria-hidden="true" />
         <canvas ref={canvas} className="studio-canvas" aria-hidden="true" />
-        <div className="scene-shade" />
+        <div className="scene-shade">
+          <ScrollBackdrop motif="light" tone="desk" />
+        </div>
         <div className="calibrate" aria-hidden="true">
           <i />
           <i />
@@ -323,6 +326,7 @@ export function SignalLab() {
     last = p.nodes[flow[flow.length - 1]];
   return (
     <section className="signal-lab section">
+      <ScrollBackdrop motif="ribbon" tone="paper" />
       <div>
         <div className="kicker">Workflow experiment</div>
         <h2>
@@ -435,6 +439,7 @@ export function CasePoster({ p }: { p: Project }) {
       className="case-poster"
       style={{ "--accent": p.accent } as React.CSSProperties}
     >
+      <ScrollBackdrop motif="circuit" />
       <div className="case-visual">
         <img src={"/studio/" + p.id + ".webp"} alt={p.name + " interface"} />
       </div>

@@ -1,3 +1,4 @@
+import { ScrollBackdrop } from "./ScrollBackdrop";
 import { useState } from "react";
 import {
   siPython,
@@ -119,6 +120,7 @@ export default function Capabilities() {
   const items = groups[g].items;
   return (
     <section id="capabilities" className="section compact">
+      <ScrollBackdrop motif="circuit" tone="dark" reverse />
       <div className="kicker">Technical capabilities</div>
       <h2>The working stack.</h2>
       <div className="tabs">

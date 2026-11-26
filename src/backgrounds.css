@@ -1,0 +1,197 @@
+/* Each atmosphere clips its own oversized planes. Content and hit targets sit above them. */
+:where(
+  section:has(> .scroll-field),
+  footer:has(> .scroll-field),
+  div:has(> .scroll-field)
+) {
+  position: relative;
+  isolation: isolate;
+}
+.scroll-field {
+  --field-x: 0px;
+  --field-y: 0px;
+  --field-far: 0px;
+  --field-tilt: 0deg;
+  --ink: 235 189 135;
+  --glow: 203 119 56;
+  --cool: 127 158 142;
+  --edge-opacity: 0.48;
+  --middle-opacity: 0.17;
+  --quiet-opacity: 0.065;
+  --field-width: clamp(780px, 105vw, 1750px);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  overflow: clip;
+  contain: strict;
+  pointer-events: none;
+  user-select: none;
+  z-index: -2;
+}
+.scroll-field[data-tone="paper"] {
+  --ink: 117 85 50;
+  --glow: 187 141 75;
+  --cool: 115 134 102;
+  --edge-opacity: 0.39;
+  --middle-opacity: 0.17;
+  --quiet-opacity: 0.058;
+}
+.scroll-field[data-tone="olive"] {
+  --ink: 204 217 160;
+  --glow: 143 161 105;
+  --cool: 168 119 73;
+}
+.scroll-field[data-tone="desk"] {
+  --ink: 249 217 157;
+  --glow: 231 172 94;
+  --cool: 135 160 118;
+  --edge-opacity: 0.16;
+}
+.scroll-field > i {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+.field-drawing {
+  inset: -130px -74px;
+  background: linear-gradient(
+    103deg,
+    rgb(var(--ink) / var(--middle-opacity)),
+    rgb(var(--ink) / var(--quiet-opacity)) 23%,
+    rgb(var(--ink) / var(--quiet-opacity)) 43%,
+    rgb(var(--ink) / var(--edge-opacity)) 86%,
+    rgb(var(--ink) / var(--middle-opacity))
+  );
+  -webkit-mask: var(--field-mask) 50% 50% / var(--field-width) auto repeat;
+  mask: var(--field-mask) 50% 50% / var(--field-width) auto repeat;
+  transform: translate3d(var(--field-x), var(--field-y), 0);
+}
+.scroll-field[data-reverse="true"] .field-drawing {
+  scale: -1 1;
+}
+.field-light {
+  inset: -100px -80px;
+  background:
+    radial-gradient(
+      ellipse 48% 42% at 91% 26%,
+      rgb(var(--glow) / 0.25),
+      transparent 90%
+    ),
+    radial-gradient(
+      ellipse 33% 45% at 7% 89%,
+      rgb(var(--cool) / 0.13),
+      transparent 90%
+    );
+  transform: translate3d(calc(var(--field-x) * -0.6), var(--field-far), 0)
+    rotate(var(--field-tilt));
+}
+.field-dust {
+  inset: -65px -60px;
+  opacity: 0.18;
+  background-image:
+    radial-gradient(circle, rgb(var(--ink) / 0.9) 0.9px, transparent 1.25px),
+    radial-gradient(circle, rgb(var(--ink) / 0.6) 0.65px, transparent 1px);
+  background-size:
+    55px 57px,
+    87px 97px;
+  background-position:
+    4px 18px,
+    33px 7px;
+  mask-image: linear-gradient(
+    115deg,
+    #000 0%,
+    transparent 29%,
+    transparent 58%,
+    #000 100%
+  );
+  transform: translate3d(calc(var(--field-x) * -0.85), var(--field-far), 0);
+}
+.scroll-field[data-motif="circuit"] {
+  --cool: 99 145 124;
+}
+.scroll-field[data-motif="ribbon"] {
+  --ink: 233 176 124;
+  --field-width: clamp(740px, 94vw, 1490px);
+}
+.scroll-field[data-tone="paper"][data-motif="ribbon"] {
+  --ink: 122 97 69;
+}
+.scroll-field[data-motif="lattice"] {
+  --field-width: clamp(850px, 112vw, 1810px);
+}
+.scroll-field[data-motif="orbit"] {
+  --ink: 213 197 153;
+  --cool: 104 147 138;
+}
+.scroll-field[data-tone="paper"][data-motif="orbit"] {
+  --ink: 115 105 70;
+}
+.scroll-field[data-motif="light"] .field-drawing {
+  display: none;
+}
+.scene-shade > .scroll-field {
+  z-index: 0;
+}
+.scene-shade .field-light {
+  background: linear-gradient(
+    115deg,
+    transparent 15%,
+    #fff1cc0a 31%,
+    #ffedb324 37%,
+    transparent 53%,
+    transparent 68%,
+    #ffe9bb0e 75%,
+    transparent 83%
+  );
+}
+.scene-shade .field-dust {
+  opacity: 0.095;
+}
+.topology > .scroll-field,
+.system-map > .scroll-field,
+.walk-intro > .scroll-field,
+.design-why > .scroll-field {
+  --edge-opacity: 0.19;
+  --middle-opacity: 0.085;
+  --quiet-opacity: 0.024;
+}
+.atlas-sheet .field-light {
+  opacity: 0.56;
+}
+.request-player > .scroll-field {
+  --edge-opacity: 0.23;
+  --quiet-opacity: 0.03;
+}
+.screen-stage > .scroll-field {
+  --edge-opacity: 0.39;
+  --quiet-opacity: 0.07;
+}
+footer > .scroll-field {
+  --edge-opacity: 0.4;
+  --middle-opacity: 0.13;
+}
+@media (max-width: 650px) {
+  .scroll-field {
+    --field-width: 700px;
+    --middle-opacity: 0.13;
+    --quiet-opacity: 0.045;
+  }
+  .scroll-field[data-motif="ribbon"],
+  .scroll-field[data-motif="lattice"] {
+    --field-width: 740px;
+  }
+  .field-drawing {
+    mask-position: 65% center;
+    -webkit-mask-position: 65% center;
+  }
+  .scroll-field .field-light {
+    opacity: 0.75;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-field > .field-drawing,
+  .scroll-field > .field-light,
+  .scroll-field > .field-dust {
+    transform: none;
+  }
+}

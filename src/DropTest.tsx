@@ -1,3 +1,4 @@
+import { ScrollBackdrop } from "./ScrollBackdrop";
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown } from "lucide-react";
 
@@ -120,6 +121,7 @@ export default function DropTest() {
   }, []);
   return (
     <section className="drop-test section">
+      <ScrollBackdrop motif="rings" tone="dark" />
       <div className="drop-copy">
         <div className="kicker">Interactive simulation</div>
         <h2>Drop test.</h2>
