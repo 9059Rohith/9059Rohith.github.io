@@ -1,3 +1,4 @@
+import { makeCoffee } from "./coffeeModel";
 import * as T from "three";
 
 type Pose = { progress: number; x: number; y: number; spin: number };
@@ -12,7 +13,11 @@ export async function mountWorkbench(
   canvas: HTMLCanvasElement,
   signal: AbortSignal,
 ) {
-  const context = canvas.getContext("webgl2", {alpha:true, antialias:true, powerPreference:"low-power"});
+  const context = canvas.getContext("webgl2", {
+    alpha: true,
+    antialias: true,
+    powerPreference: "low-power",
+  });
   if (!context) return;
   const renderer = new T.WebGLRenderer({
     context,
@@ -29,7 +34,10 @@ export async function mountWorkbench(
   const camera = new T.OrthographicCamera(-6, 6, 3.75, -3.75, 0.1, 60);
   camera.position.set(0, 0, 15);
   const textures: T.Texture[] = [];
+  const mug = makeCoffee();
   function dispose() {
+    scene.remove(mug.cup);
+    mug.dispose();
     scene.traverse((obj) => {
       if (obj instanceof T.Mesh) {
         obj.geometry.dispose();
@@ -81,7 +89,7 @@ export async function mountWorkbench(
   }
   const desk = new T.Group(),
     board = new T.Group();
-  scene.add(desk, board);
+  scene.add(desk, board, mug.cup);
   const metal = (color: T.ColorRepresentation, metalness = 0.12) =>
     new T.MeshStandardMaterial({ color, roughness: 0.52, metalness });
   function mesh(
@@ -297,8 +305,25 @@ export async function mountWorkbench(
       camera.bottom = -vh / 2;
       camera.updateProjectionMatrix();
     }
-    const lift = ease(progress / 0.51),
-      explode = ease((progress - 0.35) / 0.62);
+    const land = ease((progress - 0.06) / 0.17),
+      depart = ease((progress - 0.31) / 0.22);
+    const lift = ease((progress - 0.38) / 0.29),
+      explode = ease((progress - 0.52) / 0.46);
+    const side = Math.min(3.5, -camera.left * 0.75);
+    mug.cup.scale.setScalar(w < h ? 0.8 : 0.96);
+    mug.cup.rotation.set(
+      Math.PI / 2 - 0.12 + 0.34 * depart,
+      0.05,
+      -0.32 + 0.28 * land,
+      "ZXY",
+    );
+    mug.cup.position.set(
+      0.2 + side * (1 - land) + 4.1 * depart,
+      1.83 * (1 - land) + 2.2 * depart,
+      0.28 + 0.23 * (1 - land) + 2.8 * depart,
+    );
+    mug.cup.visible = depart < 0.999;
+
     desk.position.set(-1.15 * lift, -10 * lift, -3.6 * lift);
     desk.rotation.z = -0.19 * lift;
     desk.visible = lift < 0.997;

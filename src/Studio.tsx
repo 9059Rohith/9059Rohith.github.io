@@ -157,8 +157,13 @@ export function StudioHero() {
         ),
       );
       const first = Math.max(0, 1 - progress * 3.8),
-        second = Math.min(1, Math.max(0, (progress - 0.43) * 3.8));
+        second = Math.min(1, Math.max(0, (progress - 0.52) * 4.4));
       layer.style.setProperty("--pose", String(progress));
+      const travel = Math.min(1, Math.max(0, (progress - 0.06) / 0.17)),
+        exit = Math.min(1, Math.max(0, (progress - 0.31) / 0.22));
+      layer.style.setProperty("--mug-x", (1 - travel) * 28 + exit * 52 + "vw");
+      layer.style.setProperty("--mug-y", (-1 + travel) * 26 - exit * 51 + "vh");
+      layer.style.setProperty("--mug-alpha", String(1 - exit));
       layer.style.setProperty("--intro-opacity", String(first));
       layer.style.setProperty("--second-opacity", String(second));
       layer.style.setProperty(
@@ -249,6 +254,7 @@ export function StudioHero() {
         <div className="poster-board">
           <img src="/studio/processor.webp" alt="" />
         </div>
+        <div className="bench-cup-poster" aria-hidden="true" />
         <canvas ref={canvas} className="studio-canvas" aria-hidden="true" />
         <div className="scene-shade" />
         <div className="calibrate" aria-hidden="true">

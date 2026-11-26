@@ -1,13 +1,18 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { ArrowRight, ArrowUpRight, Menu, X, Search } from "lucide-react";
-import { StudioHero, CasePoster } from "./Studio";
+import { StudioHero, CasePoster, SignalLab } from "./Studio";
+import ScreenSequence from "./ScreenSequence";
+import DropTest from "./DropTest";
 import { Internships, ProjectIndex } from "./PortfolioSections";
 import { projects, github, source, type Project } from "./projects";
 import "@fontsource-variable/dm-sans/wght.css";
 import "./style.css";
 import "./studio.css";
 import "./atlas.css";
+import "./motion.css";
+import CoffeeFooter from "./CoffeeFooter";
+import { ArchitectureLoading, usePortfolioMotion } from "./PortfolioMotion";
 const Architecture = lazy(() => import("./ArchitectureGuide")),
   Capabilities = lazy(() => import("./Capabilities"));
 const resume = "/Rohith-Kumar-Dhamagatla.pdf",
@@ -315,6 +320,13 @@ function Research() {
         <div>
           <small>IEEE ICSADL · 2026</small>
           <h3>Lung nodule classification</h3>
+          <div className="research-pipeline" aria-label="Research method">
+            <span>LUNA16</span>
+            <i />
+            <span>GoogLeNet</span>
+            <i />
+            <span>Grad-CAM</span>
+          </div>
           <p>
             Applied GoogLeNet to the LUNA16 dataset for automated
             classification. The study reports 96% test accuracy and uses
@@ -350,17 +362,22 @@ function Research() {
 function Footer() {
   return (
     <footer id="contact">
-      <div className="kicker">
-        <i /> Get in touch
+      <div className="coffee-closing">
+        <div className="closing-copy">
+          <div className="kicker">
+            <i /> Get in touch
+          </div>
+          <h2>
+            Have a problem
+            <br />
+            <em>worth building for?</em>
+          </h2>
+          <a className="mail" href={"mailto:" + email}>
+            {email} <ArrowUpRight />
+          </a>
+        </div>
+        <CoffeeFooter />
       </div>
-      <h2>
-        Have a problem
-        <br />
-        <em>worth building for?</em>
-      </h2>
-      <a className="mail" href={"mailto:" + email}>
-        {email} <ArrowUpRight />
-      </a>
       <div className="footline">
         <span>Rohith Kumar Dhamagatla · Anantapur, India</span>
         <div>
@@ -395,10 +412,12 @@ function Home() {
       <StudioHero />
       <Internships />
       <ProjectIndex />
-      <Suspense fallback={<p>Loading architecture…</p>}>
+      <Suspense fallback={<ArchitectureLoading />}>
         <Architecture />
       </Suspense>
+      <ScreenSequence />
       <Intelligence />
+      <SignalLab />
       <section className="section compact">
         <div className="kicker">Technical deep dives</div>
         <h2>Engineering decisions.</h2>
@@ -419,6 +438,7 @@ function Home() {
       <Education />
       <Research />
       <Others />
+      <DropTest />
     </>
   );
 }
@@ -452,7 +472,7 @@ function Case({ p }: { p: Project }) {
         </div>
         <Deep p={p} />
       </section>
-      <Suspense>
+      <Suspense fallback={<ArchitectureLoading />}>
         <Architecture initial={p} />
       </Suspense>
       <div className="section next">
@@ -465,6 +485,7 @@ function Case({ p }: { p: Project }) {
   );
 }
 function App() {
+  usePortfolioMotion();
   const id = location.pathname.split("/")[2];
   const p = projects.find((q) => id === q.id);
   useEffect(() => {

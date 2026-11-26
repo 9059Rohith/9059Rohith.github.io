@@ -135,7 +135,7 @@ export default function Capabilities() {
           </button>
         ))}
       </div>
-      <div className="techs">
+      <div key={g} className="techs">
         {items.map(([icon], k) => (
           <button key={icon.slug} aria-pressed={i === k} onClick={() => I(k)}>
             <svg viewBox="0 0 24 24">
@@ -145,7 +145,7 @@ export default function Capabilities() {
           </button>
         ))}
       </div>
-      <p className="tech-detail" aria-live="polite">
+      <p key={items[i][0].slug} className="tech-detail" aria-live="polite">
         {items[i][1]}
       </p>
     </section>

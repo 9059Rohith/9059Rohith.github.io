@@ -1,3 +1,4 @@
+import { useSequenceClock } from "./useSequenceClock";
 import SystemTopology from "./SystemTopology";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -41,9 +42,11 @@ function readLocation(initial?: Project) {
 function Overview({
   flows,
   onOpen,
+  onPlay,
 }: {
   flows: Pathway[];
   onOpen: (flow: number, step: number) => void;
+  onPlay: (flow: number) => void;
 }) {
   return (
     <div className="system-map" aria-label="System overview diagram">
@@ -54,8 +57,8 @@ function Overview({
               <small>Workflow {String(i + 1).padStart(2, "0")}</small>
               <h4>{f.name}</h4>
             </div>
-            <button onClick={() => onOpen(i, 0)}>
-              Trace workflow <ArrowRight size={15} />
+            <button onClick={() => onPlay(i)}>
+              <Play size={15} /> Play workflow
             </button>
           </div>
           <p>{f.question}</p>
@@ -163,6 +166,9 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
     [speed, setSpeed] = useState(1),
     [zoom, setZoom] = useState(1);
   const workspace = useRef<HTMLDivElement>(null);
+  const meter = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState(0),
+    [finished, setFinished] = useState(false);
   const { project, flow, step } = view,
     design = designs[project.id],
     path = design.flows[flow],
@@ -179,8 +185,33 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
     if (item.top < area.top || item.bottom > area.bottom)
       viewport.scrollBy({ top: item.top - area.top - 12, behavior: "instant" });
   }, [project.id, flow, step, zoom]);
+  const rewind = useSequenceClock(
+    project.id + "/" + flow + "/" + step,
+    playing,
+    6500,
+    speed,
+    (fraction) => {
+      meter.current?.style.setProperty("--elapsed", String(fraction));
+      workspace.current?.style.setProperty(
+        "--wire-progress",
+        String(Math.max(0, (fraction - 0.69) / 0.31)),
+      );
+      const progress = fraction < 0.29 ? 0 : fraction < 0.69 ? 1 : 2;
+      setPhase((old) => (old === progress ? old : progress));
+    },
+    () => {
+      if (!path || step === path.steps.length - 1) {
+        setPlaying(false);
+        setFinished(true);
+        return;
+      }
+      setView((v) => ({ ...v, step: v.step + 1 }));
+    },
+  );
   function chooseFlow(f: number, s = 0, p = project, reveal = false) {
     setPlaying(false);
+    setFinished(false);
+    rewind();
     setZoom(1);
     setView({ project: p, flow: f, step: s });
     const u = new URL(window.location.href);
@@ -199,16 +230,10 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
   }
   function chooseStep(s: number) {
     setPlaying(false);
+    setFinished(false);
+    rewind();
     setView((v) => ({ ...v, step: s }));
   }
-  useEffect(() => {
-    if (!playing || !path) return;
-    const timer = setTimeout(() => {
-      if (step >= path.steps.length - 1) setPlaying(false);
-      else setView((v) => ({ ...v, step: v.step + 1 }));
-    }, 2600 / speed);
-    return () => clearTimeout(timer);
-  }, [playing, step, path, speed]);
   return (
     <section className="section atlas" id="architecture">
       <div className="atlas-heading">
@@ -217,9 +242,9 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
           <h2>Complete Architecture</h2>
         </div>
         <p>
-          Choose a system. Read its map from left to right, then open a workflow
-          to see the request, the data passed between components and the code
-          that handles each step.
+          Play the system map to see which components talk to each other. Then
+          play a request to follow its data, decisions and result through the
+          code.
         </p>
       </div>
       {!initial && (
@@ -243,6 +268,15 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
           <small>{project.kind}</small>
           <h3>{project.name}</h3>
           <p>{design.summary}</p>
+          <button
+            className="launch-request"
+            onClick={() => {
+              chooseFlow(0, 0, project, true);
+              setPlaying(true);
+            }}
+          >
+            <Play size={16} fill="currentColor" /> Play a request
+          </button>
         </div>
         <dl className="boundaries">
           {[
@@ -294,6 +328,10 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
               <Overview
                 flows={design.flows}
                 onOpen={(f, s) => chooseFlow(f, s, project, true)}
+                onPlay={(f) => {
+                  chooseFlow(f, 0, project, true);
+                  setPlaying(true);
+                }}
               />
             </>
           ) : (
@@ -309,6 +347,132 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
                 <p>
                   <b>Example request</b> {path.input}
                 </p>
+              </div>
+              <div
+                className="request-player"
+                ref={meter}
+                data-phase={phase}
+                data-playing={playing}
+                data-finished={finished}
+              >
+                <div className="player-head">
+                  <span>Request playback</span>
+                  <b>
+                    {finished
+                      ? "Complete"
+                      : `Step ${step + 1} / ${path.steps.length}`}
+                  </b>
+                </div>
+                <div
+                  className="transport-diagram"
+                  aria-label="Input, active component and output"
+                >
+                  <span className="transport-stop incoming">
+                    <small>From</small>
+                    {step ? path.steps[step - 1][0] : "Example request"}
+                  </span>
+                  <i className="transport-track in-track">
+                    <b />
+                  </i>
+                  <strong className="transport-stop processing">
+                    {stage[0]}
+                  </strong>
+                  <i className="transport-track out-track">
+                    <b />
+                  </i>
+                  <span className="transport-stop outgoing">
+                    <small>To</small>
+                    {step < path.steps.length - 1
+                      ? path.steps[step + 1][0]
+                      : "Request result"}
+                  </span>
+                </div>
+                <div className="player-caption" aria-live="polite">
+                  <small>
+                    {finished
+                      ? "Result"
+                      : ["Receiving", "Processing", "Passing on"][phase]}
+                  </small>
+                  <p>
+                    {finished
+                      ? path.result
+                      : phase === 0
+                        ? step
+                          ? path.steps[step - 1][3]
+                          : path.input
+                        : phase === 1
+                          ? stage[2]
+                          : stage[3]}
+                  </p>
+                </div>
+                <div className="chapter-bars" aria-label="Workflow steps">
+                  {path.steps.map((item, i) => (
+                    <button
+                      key={i}
+                      aria-label={"Jump to " + item[1]}
+                      aria-current={step === i ? "step" : undefined}
+                      className={
+                        i < step || finished
+                          ? "done"
+                          : i === step
+                            ? "current"
+                            : ""
+                      }
+                      onClick={() => chooseStep(i)}
+                    >
+                      <i />
+                    </button>
+                  ))}
+                </div>
+                <div className="trace-tools">
+                  <button
+                    onClick={() => {
+                      if (!playing && finished) chooseStep(0);
+                      setPlaying(!playing);
+                    }}
+                  >
+                    {playing ? <Pause /> : <Play />}
+                    {playing
+                      ? "Pause"
+                      : finished
+                        ? "Replay trace"
+                        : "Play trace"}
+                  </button>
+                  <button
+                    aria-label="Previous step"
+                    disabled={step === 0}
+                    onClick={() => chooseStep(step - 1)}
+                  >
+                    <ChevronLeft />
+                  </button>
+                  <button
+                    aria-label="Next step"
+                    disabled={step === path.steps.length - 1}
+                    onClick={() => chooseStep(step + 1)}
+                  >
+                    <ChevronRight />
+                  </button>
+                  <button
+                    aria-label="Reset trace"
+                    onClick={() => {
+                      chooseStep(0);
+                      setZoom(1);
+                    }}
+                  >
+                    <RotateCcw />
+                  </button>
+                  <select
+                    aria-label="Playback speed"
+                    value={speed}
+                    onChange={(e) => setSpeed(+e.target.value)}
+                  >
+                    {[0.5, 1, 2].map((n) => (
+                      <option key={n} value={n}>
+                        {n}×
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="walk-grid">
                 <div className="trace-column">
@@ -360,7 +524,10 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
                           )}
                           {i < path.steps.length - 1 && (
                             <button
-                              className="wire"
+                              className={
+                                "wire " +
+                                (i === step && phase === 2 ? "wire-live" : "")
+                              }
                               aria-label={"Inspect handoff: " + data}
                               onClick={() => chooseStep(i + 1)}
                             >
@@ -372,52 +539,6 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
                       ))}
                     </ol>
                   </DiagramViewport>
-                  <div className="trace-tools">
-                    <button
-                      onClick={() => {
-                        if (!playing && step === path.steps.length - 1)
-                          chooseStep(0);
-                        setPlaying(!playing);
-                      }}
-                    >
-                      {playing ? <Pause /> : <Play />}
-                      {playing ? "Pause" : "Play trace"}
-                    </button>
-                    <button
-                      aria-label="Previous step"
-                      disabled={step === 0}
-                      onClick={() => chooseStep(step - 1)}
-                    >
-                      <ChevronLeft />
-                    </button>
-                    <button
-                      aria-label="Next step"
-                      disabled={step === path.steps.length - 1}
-                      onClick={() => chooseStep(step + 1)}
-                    >
-                      <ChevronRight />
-                    </button>
-                    <button
-                      aria-label="Reset trace"
-                      onClick={() => {
-                        chooseStep(0);
-                        setZoom(1);
-                      }}
-                    >
-                      <RotateCcw />
-                    </button>
-                    <select
-                      aria-label="Playback speed"
-                      value={speed}
-                      onChange={(e) => setSpeed(+e.target.value)}
-                    >
-                      {[0.5, 1, 2].map((n) => (
-                        <option key={n} value={n}>
-                          {n}×
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
                 <article className="step-detail" aria-live="polite">
                   <small>

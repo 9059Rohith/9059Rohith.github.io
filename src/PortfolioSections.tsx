@@ -1,3 +1,4 @@
+import { InternshipSignal } from "./PortfolioMotion";
 import {
   ArrowUpRight,
   Waypoints,
@@ -47,12 +48,13 @@ export function Internships() {
       <div className="section-label">Professional experience</div>
       <h2>Internships</h2>
       <div className="intern-list">
-        {roles.map(({ icon: Icon, ...r }) => (
+        {roles.map(({ icon: Icon, ...r }, index) => (
           <article key={r.company}>
             <div className="intern-date">
               <Icon size={24} />
               <span>{r.time}</span>
               <small>{r.location}</small>
+              <InternshipSignal index={index} />
             </div>
             <div className="intern-role">
               <h3>{r.company}</h3>
