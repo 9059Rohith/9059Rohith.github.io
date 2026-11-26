@@ -1,14 +1,14 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { ArrowRight, ArrowUpRight, Menu, X, Search } from "lucide-react";
-import { StudioHero, SignalLab, WorkShowcase, CasePoster } from "./Studio";
-import DropTest from "./DropTest";
-import ScreenSequence from "./ScreenSequence";
+import { StudioHero, CasePoster } from "./Studio";
+import { Internships, ProjectIndex } from "./PortfolioSections";
 import { projects, github, source, type Project } from "./projects";
 import "@fontsource-variable/dm-sans/wght.css";
 import "./style.css";
 import "./studio.css";
-const Architecture = lazy(() => import("./Architecture")),
+import "./atlas.css";
+const Architecture = lazy(() => import("./ArchitectureGuide")),
   Capabilities = lazy(() => import("./Capabilities"));
 const resume = "/Rohith-Kumar-Dhamagatla.pdf",
   email = "rajuchaswik@gmail.com",
@@ -19,7 +19,13 @@ function Nav() {
   useEffect(() => {
     const f = () => {
       let s = "";
-      for (const id of ["work", "architecture", "about", "contact"]) {
+      for (const id of [
+        "internships",
+        "work",
+        "architecture",
+        "about",
+        "contact",
+      ]) {
         const e = document.getElementById(id);
         if (e && e.getBoundingClientRect().top < innerHeight * 0.48) s = id;
       }
@@ -71,7 +77,8 @@ function Nav() {
       </button>
       <nav className={open ? "open" : ""}>
         {[
-          ["work", "Work"],
+          ["internships", "Internships"],
+          ["work", "Projects"],
           ["architecture", "Architecture"],
           ["about", "About"],
           ["contact", "Contact"],
@@ -267,30 +274,11 @@ function About() {
     </section>
   );
 }
-function History() {
+function Education() {
   return (
     <section className="section compact">
-      <div className="kicker">Experience & education</div>
-      <h2>Field experience.</h2>
+      <h2>Education</h2>
       {[
-        [
-          "Jun – Oct 2026",
-          "Software Developer Intern",
-          "Trickee Technologies",
-          "GPS telemetry, trip lifecycle APIs, route optimization and energy prediction for an electric fleet platform.",
-        ],
-        [
-          "Jan – May 2026",
-          "Full Stack Developer Intern",
-          "EKAM",
-          "MERN travel-platform features, transaction flows and REST APIs for TravelSeasons.",
-        ],
-        [
-          "Jul – Dec 2025",
-          "AI/ML Developer Intern",
-          "RYL NeuroAcademy",
-          "Document processing, embeddings and semantic retrieval for Saathi AI.",
-        ],
         [
           "2023 – 2027",
           "B.Tech · Computer Science",
@@ -405,12 +393,11 @@ function Home() {
   return (
     <>
       <StudioHero />
-      <ScreenSequence />
-      <WorkShowcase />
+      <Internships />
+      <ProjectIndex />
       <Suspense fallback={<p>Loading architecture…</p>}>
         <Architecture />
       </Suspense>
-      <SignalLab />
       <Intelligence />
       <section className="section compact">
         <div className="kicker">Technical deep dives</div>
@@ -429,9 +416,8 @@ function Home() {
       <Suspense>
         <Capabilities />
       </Suspense>
-      <History />
+      <Education />
       <Research />
-      <DropTest />
       <Others />
     </>
   );
@@ -479,34 +465,6 @@ function Case({ p }: { p: Project }) {
   );
 }
 function App() {
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("in-frame");
-            observer.unobserve(entry.target);
-          }
-        }),
-      { threshold: 0.025 },
-    );
-    const register = () =>
-      document
-        .querySelectorAll(".section h2,footer h2,.case-caption h1")
-        .forEach((el) => {
-          if (!el.classList.contains("in-frame")) observer.observe(el);
-        });
-    register();
-    const changes = new MutationObserver(register);
-    changes.observe(document.getElementById("main")!, {
-      childList: true,
-      subtree: true,
-    });
-    return () => {
-      observer.disconnect();
-      changes.disconnect();
-    };
-  }, []);
   const id = location.pathname.split("/")[2];
   const p = projects.find((q) => id === q.id);
   useEffect(() => {

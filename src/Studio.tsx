@@ -294,7 +294,7 @@ export function StudioHero() {
           </div>
           <p>Follow a signal from the interface to the decision behind it.</p>
         </div>
-        <a className="scroll-cue" href="#work">
+        <a className="scroll-cue" href="#internships">
           <span>
             <ArrowDown size={12} />
           </span>
