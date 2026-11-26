@@ -1,6 +1,8 @@
-# Rohith Kumar Dhamgatla
+# Rohith Kumar Dhamagatla
 
 Personal portfolio for AI/ML and full-stack engineering. The architecture explorer covers four projects with a complete map and four workflow views for each. Each component links to its implementation.
+
+[Open the live portfolio](https://9059rohith.github.io/) · [Explore the architecture diagrams](https://9059rohith.github.io/#architecture)
 
 ## Development
 

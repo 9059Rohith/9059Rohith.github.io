@@ -1,5 +1,111 @@
-import type {Project} from './projects'
-export default function Artwork({p}:{p:Project}){return <svg viewBox="0 0 480 220" preserveAspectRatio="xMidYMid slice" className="art" aria-hidden="true" style={{color:p.accent}}>
- <defs><pattern id={'dots'+p.id} width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="currentColor" opacity=".24"/></pattern></defs><rect width="480" height="220" fill={'url(#dots'+p.id+')'}/>
- {p.id==='vaakmitra'?Array.from({length:99},(_,i)=>{const h=3+Math.abs(Math.sin(i*.45)*Math.cos(i*.12))*(18+135*Math.exp(-((i-51)**2)/420));return <path key={i} d={`M${i*5} ${112-h*.5}v${h}`} stroke="currentColor" strokeWidth="2.1"/>}):p.id==='udhyogapay'?<g transform="translate(234,110) rotate(-19)">{Array.from({length:10},(_,i)=><g key={i} stroke="currentColor" opacity=".27"><path d={`M-300 ${i*32-155}h600M${i*60-280} -180v360`}/></g>)}<path d="M-210 69H-92V5H28V-59H154" strokeWidth="3" fill="none" stroke="currentColor"/>{[[-210,69],[-92,5],[28,-59],[154,-59]].map(([x,y])=><g key={x}><circle cx={x} cy={y} r="11" stroke="currentColor" fill="#231d1a"/><circle cx={x} cy={y} r="3" fill="currentColor"/></g>)}</g>:p.id==='life-os'?<g transform="translate(240,100)">{[0,1,2,3,4].map(i=><g key={i} transform={`translate(${i*4},${i*12-20})`}><path d="M-134 0L-5 -62L133 -4L1 60Z" fill="#101f39" stroke="currentColor" opacity={1-i*.12}/><path d="M-75 0L0 -35L77 -2L1 33Z" fill="none" stroke="currentColor" opacity=".5"/></g>)}</g>:<g>{Array.from({length:34},(_,i)=>{const h=25+i*2.2+19*Math.sin(i*.4);return <path key={i} d={`M${40+i*12} 171v-${h}`} stroke="currentColor" opacity={.25+i*.017} strokeWidth="6"/>})}<path d="M35 125C105 148 135 72 202 90S301 60 335 67S395 40 438 34" fill="none" stroke="#fff0c0" strokeWidth="2"/></g>}</svg>}
-
+import type { Project } from "./projects";
+export default function Artwork({ p }: { p: Project }) {
+  return (
+    <svg
+      viewBox="0 0 480 220"
+      preserveAspectRatio="xMidYMid slice"
+      className="art"
+      aria-hidden="true"
+      style={{ color: p.accent }}
+    >
+      <defs>
+        <pattern
+          id={"dots" + p.id}
+          width="18"
+          height="18"
+          patternUnits="userSpaceOnUse"
+        >
+          <circle cx="1" cy="1" r=".8" fill="currentColor" opacity=".24" />
+        </pattern>
+      </defs>
+      <rect width="480" height="220" fill={"url(#dots" + p.id + ")"} />
+      {p.id === "vaakmitra" ? (
+        Array.from({ length: 99 }, (_, i) => {
+          const h =
+            3 +
+            Math.abs(Math.sin(i * 0.45) * Math.cos(i * 0.12)) *
+              (18 + 135 * Math.exp(-((i - 51) ** 2) / 420));
+          return (
+            <path
+              key={i}
+              d={`M${i * 5} ${112 - h * 0.5}v${h}`}
+              stroke="currentColor"
+              strokeWidth="2.1"
+            />
+          );
+        })
+      ) : p.id === "udhyogapay" ? (
+        <g transform="translate(234,110) rotate(-19)">
+          {Array.from({ length: 10 }, (_, i) => (
+            <g key={i} stroke="currentColor" opacity=".27">
+              <path d={`M-300 ${i * 32 - 155}h600M${i * 60 - 280} -180v360`} />
+            </g>
+          ))}
+          <path
+            d="M-210 69H-92V5H28V-59H154"
+            strokeWidth="3"
+            fill="none"
+            stroke="currentColor"
+          />
+          {[
+            [-210, 69],
+            [-92, 5],
+            [28, -59],
+            [154, -59],
+          ].map(([x, y]) => (
+            <g key={x}>
+              <circle
+                cx={x}
+                cy={y}
+                r="11"
+                stroke="currentColor"
+                fill="#231d1a"
+              />
+              <circle cx={x} cy={y} r="3" fill="currentColor" />
+            </g>
+          ))}
+        </g>
+      ) : p.id === "life-os" ? (
+        <g transform="translate(240,100)">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <g key={i} transform={`translate(${i * 4},${i * 12 - 20})`}>
+              <path
+                d="M-134 0L-5 -62L133 -4L1 60Z"
+                fill="#101f39"
+                stroke="currentColor"
+                opacity={1 - i * 0.12}
+              />
+              <path
+                d="M-75 0L0 -35L77 -2L1 33Z"
+                fill="none"
+                stroke="currentColor"
+                opacity=".5"
+              />
+            </g>
+          ))}
+        </g>
+      ) : (
+        <g>
+          {Array.from({ length: 34 }, (_, i) => {
+            const h = 25 + i * 2.2 + 19 * Math.sin(i * 0.4);
+            return (
+              <path
+                key={i}
+                d={`M${40 + i * 12} 171v-${h}`}
+                stroke="currentColor"
+                opacity={0.25 + i * 0.017}
+                strokeWidth="6"
+              />
+            );
+          })}
+          <path
+            d="M35 125C105 148 135 72 202 90S301 60 335 67S395 40 438 34"
+            fill="none"
+            stroke="#fff0c0"
+            strokeWidth="2"
+          />
+        </g>
+      )}
+    </svg>
+  );
+}
