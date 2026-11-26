@@ -1,23 +1,13 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  ArrowDown,
-  ArrowDownRight,
-  ArrowRight,
-  ArrowUpRight,
-  Menu,
-  X,
-  FileText,
-  Search,
-  Orbit,
-} from "lucide-react";
-import Field from "./Field";
-import Artwork from "./Artwork";
+import { ArrowRight, ArrowUpRight, Menu, X, Search } from "lucide-react";
+import { StudioHero, SignalLab, WorkShowcase, CasePoster } from "./Studio";
+import DropTest from "./DropTest";
+import ScreenSequence from "./ScreenSequence";
 import { projects, github, source, type Project } from "./projects";
-import "@fontsource/instrument-serif/latin-400.css";
-import "@fontsource/instrument-serif/latin-400-italic.css";
 import "@fontsource-variable/dm-sans/wght.css";
 import "./style.css";
+import "./studio.css";
 const Architecture = lazy(() => import("./Architecture")),
   Capabilities = lazy(() => import("./Capabilities"));
 const resume = "/Rohith-Kumar-Dhamagatla.pdf",
@@ -35,17 +25,33 @@ function Nav() {
       }
       A(s);
     };
-    window.addEventListener("scroll", f, { passive: true });
-    return () => window.removeEventListener("scroll", f);
+    const sync = () => {
+      f();
+      document.documentElement.style.setProperty(
+        "--page-progress",
+        String(
+          scrollY /
+            Math.max(1, document.documentElement.scrollHeight - innerHeight),
+        ),
+      );
+      document.body.classList.toggle("scrolled", scrollY > innerHeight * 0.28);
+    };
+    sync();
+    window.addEventListener("scroll", sync, { passive: true });
+    return () => window.removeEventListener("scroll", sync);
   }, []);
   return (
-    <header>
+    <header
+      className={open ? "menu-open" : undefined}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          set(false);
+          document.querySelector<HTMLButtonElement>(".mobile-toggle")?.focus();
+        }
+      }}
+    >
       <a href="/" className="brand" aria-label="Rohith home">
-        <span>
-          r<span className="branddot">.</span>k
-        </span>
-        <i />
-        Rohith Kumar
+        ROHITH
       </a>
       <button
         className="mobile-toggle"
@@ -53,7 +59,15 @@ function Nav() {
         aria-expanded={open}
         onClick={() => set(!open)}
       >
-        {open ? <X /> : <Menu />}
+        {open ? (
+          <>
+            Close <X size={16} />
+          </>
+        ) : (
+          <>
+            Menu <Menu size={16} />
+          </>
+        )}
       </button>
       <nav className={open ? "open" : ""}>
         {[
@@ -75,41 +89,8 @@ function Nav() {
           Résumé <ArrowUpRight size={14} />
         </a>
       </nav>
+      <div className="reading-progress" aria-hidden="true" />
     </header>
-  );
-}
-function Work() {
-  return (
-    <section className="section" id="work">
-      <div className="kicker">Selected work</div>
-      <div className="section-title">
-        <h2>
-          Four systems <em>in practice.</em>
-        </h2>
-        <span className="mono">2025 — 2026</span>
-      </div>
-      <div className="works">
-        {projects.map((p, i) => (
-          <a
-            className="work"
-            key={p.id}
-            href={"/projects/" + p.id}
-            style={{ "--accent": p.accent } as React.CSSProperties}
-          >
-            <div className={"plate plate-" + i}>
-              <span className="plate-label">{p.kind}</span>
-              <Artwork p={p} />
-            </div>
-            <div className="work-title">
-              <h3>{p.name}</h3>
-              <ArrowUpRight />
-            </div>
-            <p>{p.intro}</p>
-            <small>{p.stack.slice(0, 4).join("  /  ")}</small>
-          </a>
-        ))}
-      </div>
-    </section>
   );
 }
 const ai = [
@@ -423,46 +404,13 @@ function Deep({ p }: { p: Project }) {
 function Home() {
   return (
     <>
-      <section className="hero">
-        <div className="hero-text">
-          <div className="kicker">
-            <i /> Available for opportunities
-          </div>
-          <h1>
-            Rohith Kumar
-            <br />
-            <em>Dhamagatla.</em>
-          </h1>
-          <h3>
-            Full-Stack Developer <span>/</span> AI & ML Engineer
-          </h3>
-          <p>
-            I build speech tools, decision systems and AI agents with a clear
-            path from input to outcome.
-          </p>
-          <div className="actions">
-            <a className="primary" href="#work">
-              Explore my work <ArrowDownRight size={17} />
-            </a>
-            <a className="secondary" href={resume}>
-              <FileText size={16} /> View résumé
-            </a>
-          </div>
-        </div>
-        <Field />
-        <div className="hero-foot">
-          <span>
-            <Orbit size={15} /> Anantapur, India
-          </span>
-          <a href="#work">
-            Scroll to explore <ArrowDown size={15} />
-          </a>
-        </div>
-      </section>
-      <Work />
+      <StudioHero />
+      <ScreenSequence />
+      <WorkShowcase />
       <Suspense fallback={<p>Loading architecture…</p>}>
         <Architecture />
       </Suspense>
+      <SignalLab />
       <Intelligence />
       <section className="section compact">
         <div className="kicker">Technical deep dives</div>
@@ -483,6 +431,7 @@ function Home() {
       </Suspense>
       <History />
       <Research />
+      <DropTest />
       <Others />
     </>
   );
@@ -493,22 +442,8 @@ function Case({ p }: { p: Project }) {
   }, [p]);
   return (
     <>
+      <CasePoster p={p} />
       <section className="section case">
-        <a href="/#work">← Selected work</a>
-        <div className="kicker">{p.kind}</div>
-        <h1>{p.name}</h1>
-        <p className="pull">{p.intro}</p>
-        <div className="actions">
-          <a className="primary" href={p.link}>
-            {p.linkLabel} <ArrowUpRight size={15} />
-          </a>
-          <a className="secondary" href={github + "/" + p.repo}>
-            GitHub ↗
-          </a>
-        </div>
-        <div className="caseart">
-          <Artwork p={p} />
-        </div>
         <div className="facts">
           <div>
             <small>Contribution</small>
@@ -544,6 +479,34 @@ function Case({ p }: { p: Project }) {
   );
 }
 function App() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-frame");
+            observer.unobserve(entry.target);
+          }
+        }),
+      { threshold: 0.025 },
+    );
+    const register = () =>
+      document
+        .querySelectorAll(".section h2,footer h2,.case-caption h1")
+        .forEach((el) => {
+          if (!el.classList.contains("in-frame")) observer.observe(el);
+        });
+    register();
+    const changes = new MutationObserver(register);
+    changes.observe(document.getElementById("main")!, {
+      childList: true,
+      subtree: true,
+    });
+    return () => {
+      observer.disconnect();
+      changes.disconnect();
+    };
+  }, []);
   const id = location.pathname.split("/")[2];
   const p = projects.find((q) => id === q.id);
   useEffect(() => {

@@ -12,5 +12,4 @@ The published website uses the contents of `dist`. All fonts and the résumé ar
 
 ## Content
 
-Project metadata, workflow definitions and source links live in `src/projects.ts`. The architecture explorer is implemented in `src/Architecture.tsx`. The hero visualization is drawn by `src/Field.tsx` and respects reduced motion.
-
+Project metadata, workflow definitions and source links live in `src/projects.ts`. The architecture explorer is implemented in `src/Architecture.tsx`. The workbench in `src/workbenchScene.ts` uses Three.js and renders on demand. A textured, CSS-rendered scene is available on devices without WebGL. The project reel and interface walkthrough use captures of the project demos. The walnut surface uses the CC0 [Wood Table 001 texture from Poly Haven](https://polyhaven.com/a/wood_table_001).
