@@ -48,6 +48,7 @@ export function ArchitectureLoading() {
   const id = useId();
   return (
     <section
+      id="architecture"
       className="section architecture-loading"
       aria-busy="true"
       role="status"

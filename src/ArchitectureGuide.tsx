@@ -271,7 +271,7 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
           <button
             className="launch-request"
             onClick={() => {
-              chooseFlow(0, 0, project, true);
+              chooseFlow(flow < 0 ? 0 : flow, 0, project, true);
               setPlaying(true);
             }}
           >
