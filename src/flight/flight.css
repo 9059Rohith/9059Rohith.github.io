@@ -302,8 +302,6 @@ a {
   position: absolute;
   width: min(34vw, 510px);
   top: 48%;
-  transform: translateY(calc(-44% + var(--lift, 0px))) scale(var(--approach, 1));
-  opacity: var(--copy-alpha, 1);
   text-shadow: 0 1px 12px #17194766;
   isolation: isolate;
 }
@@ -573,7 +571,6 @@ a {
     top: auto;
     bottom: 12%;
     width: 84%;
-    transform: translateY(calc(var(--lift, 0px) * 0.35));
     transform-origin: 50% center;
   }
   .flight-story::before {
@@ -689,12 +686,6 @@ a {
     background: radial-gradient(ellipse, #15184977, transparent 76%);
   }
 }
-@media (min-width: 701px) {
-  .flight-story {
-    transform: translate(var(--pass-x, 0px), calc(-44% + var(--lift, 0px)))
-      scale(var(--approach, 1));
-  }
-}
 .journey .hud {
   animation: hud-rise 0.7s ease-out both;
 }
@@ -764,4 +755,49 @@ a {
     );
     inset: -40% -22%;
   }
+}
+/* Chapter centres are projected from the flight path. Links stay native and move with their text. */
+.flight-main {
+  overflow: clip;
+}
+.flight-main .flight-story.port,
+.flight-main .flight-story.starboard {
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  transform-origin: 50% 50%;
+  visibility: hidden;
+  will-change: transform, opacity;
+}
+.flight-story[inert] {
+  pointer-events: none;
+}
+.flight-poster {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.flight-poster[data-painted] {
+  background: none;
+}
+.scroll-hint {
+  opacity: var(--departure-opacity, 1);
+}
+.arrival {
+  opacity: var(--arrival-opacity, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint,
+  .arrival {
+    opacity: 1;
+  }
+}
+
+/* Keep the selected chapter readable while the flight renderer loads. */
+.flight-main .flight-story:not([style]):not([inert]) {
+  left: 50%;
+  top: 52%;
+  visibility: visible;
+  transform: translate(-50%, -50%);
 }

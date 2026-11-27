@@ -21,6 +21,8 @@ export default function Flight() {
     [sound, setSound] = useState(false),
     [ready, setReady] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null),
+    backup = useRef<HTMLCanvasElement>(null),
+    snapTo = useRef<number | null>(null),
     view = useRef<HTMLDivElement>(null),
     dial = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null),
@@ -40,6 +42,7 @@ export default function Flight() {
       enter(true);
       return;
     }
+    snapTo.current = s;
     window.scrollTo({ top: s * stopHeight(), behavior: "instant" });
   }
   function go(to: number) {
@@ -103,52 +106,66 @@ export default function Flight() {
       suspended = false,
       previousFrame = 0;
     const ref = canvas.current!;
-    function measure() {
-      const value = clamp(scrollY / stopHeight(), 0, last),
-        i = Math.round(value),
-        offset = value - i;
-      progress.current = value;
-      setIndex(i);
+    let shown = jumpAfterEntry.current,
+      previousTime = 0;
+    function syncUI(value: number) {
+      setIndex(Math.round(value));
       aud.current?.travel(value);
-      const opacity = reduced.matches
-        ? 1
-        : clamp((0.52 - Math.abs(offset)) / 0.16, 0, 1);
-      view.current?.style.setProperty("--copy-alpha", String(opacity));
       view.current?.style.setProperty(
-        "--approach",
-        String(
-          reduced.matches
-            ? 1
-            : offset < 0
-              ? 1 + offset * 1.05
-              : 1 + offset * 0.92,
-        ),
+        "--departure-opacity",
+        String(clamp(1 - value * 3.5, 0, 1)),
       );
       view.current?.style.setProperty(
-        "--pass-x",
-        (reduced.matches ? 0 : offset * (i % 2 === 0 ? -1 : 1) * 23) + "vw",
-      );
-      view.current?.style.setProperty(
-        "--lift",
-        (reduced.matches ? 0 : -offset * 58) + "px",
+        "--arrival-opacity",
+        String(clamp(1 - (last - value) * 3, 0, 1)),
       );
       view.current?.style.setProperty("--route", String(value / last));
       if (dial.current) dial.current.value = String(value);
+    }
+    function measure() {
+      progress.current = clamp(scrollY / stopHeight(), 0, last);
+      if (!world) syncUI(progress.current);
       dirty = true;
       schedule();
     }
     function draw(time: number) {
       raf = 0;
       if (destroyed || document.hidden || suspended) return;
+      const elapsed = previousTime
+        ? Math.min(0.064, (time - previousTime) / 1000)
+        : 1 / 60;
+      previousTime = time;
+      const goal = progress.current;
+      if (
+        reduced.matches ||
+        (snapTo.current !== null && Math.abs(goal - snapTo.current) < 0.002)
+      ) {
+        shown = goal;
+        snapTo.current = null;
+      } else {
+        // Ease more gently near a caption. Frame time keeps the pacing consistent across devices.
+        const near = Math.max(0, 1 - Math.abs(shown - Math.round(shown)) * 3.6);
+        const rate =
+          Math.abs(goal - shown) > 1.2 ? 7.5 : 5.4 - 2.6 * near * near;
+        shown += (goal - shown) * -Math.expm1(-rate * elapsed);
+        if (Math.abs(goal - shown) < 0.00035) shown = goal;
+      }
       if (
         world &&
-        (dirty || (!reduced.matches && time - previousFrame >= 32))
+        (dirty ||
+          shown !== goal ||
+          (!reduced.matches && time - previousFrame >= 32))
       ) {
         previousFrame = time;
-        world.draw(progress.current, time, reduced.matches);
+        syncUI(shown);
+        world.draw(
+          reduced.matches ? Math.round(shown) : shown,
+          time,
+          reduced.matches,
+        );
         dirty = false;
       }
-      if (world && !reduced.matches) schedule();
+      if (world && (!reduced.matches || shown !== goal)) schedule();
     }
     function schedule() {
       if (!raf && !destroyed && !suspended && !document.hidden)
@@ -173,9 +190,10 @@ export default function Flight() {
     }
     function lost(event: Event) {
       event.preventDefault();
-      world?.dispose();
-      world = undefined;
+      world?.loseContext();
       setReady(false);
+      dirty = true;
+      schedule();
     }
     const modal = dialog.current!,
       changes = new MutationObserver(suspend);
@@ -191,9 +209,16 @@ export default function Flight() {
       .then((module) => {
         if (destroyed) return;
         try {
-          world = module.flightWorld(ref, stops.length);
+          world = module.flightWorld(
+            ref,
+            backup.current!,
+            Array.from(
+              view.current!.querySelectorAll<HTMLElement>("[data-station]"),
+            ),
+            stops.length,
+          );
           world.draw(progress.current, 0, reduced.matches);
-          setReady(true);
+          setReady(world.hardware);
           schedule();
         } catch {
           setReady(false);
@@ -233,16 +258,17 @@ export default function Flight() {
     return () =>
       document.documentElement.classList.remove("flight-dialog-open");
   }, [sheet]);
-  function openAtlas() {
-    setSheet(cur.project?.id ?? "all");
-  }
+
   return (
     <div className={entered ? "flight journey" : "flight gate"} ref={view}>
       <div className="flight-view" aria-hidden="true">
         <div className="sky" />
         {entered && (
           <>
-            <div className={"flight-poster " + (ready ? "hidden" : "")} />
+            <canvas
+              ref={backup}
+              className={"flight-poster " + (ready ? "hidden" : "")}
+            />
             <canvas className={ready ? "world online" : "world"} ref={canvas} />
           </>
         )}
@@ -329,13 +355,14 @@ export default function Flight() {
             />
           </label>
           <main className="flight-main">
-            {index === 0 ? (
+            {index === 0 && (
               <div className="scroll-hint">
                 <button onClick={() => jump(1)}>
                   Scroll to explore my work
                 </button>
               </div>
-            ) : index === last ? (
+            )}
+            {index === last && (
               <section key="arrival" className="arrival">
                 <h2>{cur.body}</h2>
                 <div className="arrival-links">
@@ -349,24 +376,32 @@ export default function Flight() {
                   Replay
                 </button>
               </section>
-            ) : (
+            )}
+            {stops.slice(1, -1).map((cur, n) => (
               <section
+                data-station={n + 1}
+                inert={index !== n + 1}
+                aria-hidden={index !== n + 1}
                 key={cur.id}
                 className={
-                  "flight-story " + (index % 2 === 0 ? "port" : "starboard")
+                  "flight-story " + ((n + 1) % 2 === 0 ? "port" : "starboard")
                 }
-                aria-labelledby="story-title"
+                aria-labelledby={"story-" + cur.id}
               >
                 <small>
                   {cur.group}
                   {cur.project ? " / " + cur.project.kind : ""}
                 </small>
-                <h2 id="story-title">{cur.title}</h2>
+                <h2 id={"story-" + cur.id}>{cur.title}</h2>
                 <p>{cur.body}</p>
                 <div className="story-links">
                   {cur.project && (
                     <>
-                      <button onClick={openAtlas}>Architecture ↗</button>
+                      <button
+                        onClick={() => setSheet(cur.project?.id ?? "all")}
+                      >
+                        Architecture ↗
+                      </button>
                       <a
                         href={cur.project.link}
                         target="_blank"
@@ -387,7 +422,9 @@ export default function Flight() {
                     </>
                   )}
                   {cur.id === "architecture" && (
-                    <button onClick={openAtlas}>Explore architecture ↗</button>
+                    <button onClick={() => setSheet(cur.project?.id ?? "all")}>
+                      Explore architecture ↗
+                    </button>
                   )}
                   {cur.links?.map(([label, url]) => (
                     <a key={url} href={url} target="_blank" rel="noreferrer">
@@ -396,7 +433,7 @@ export default function Flight() {
                   ))}
                 </div>
               </section>
-            )}
+            ))}
           </main>
           {index > 0 && index < last && (
             <nav className="chapter-nav" aria-label="Chapter navigation">

@@ -1,6 +1,9 @@
 import * as T from "three";
 import { MarchingCubes } from "three/addons/objects/MarchingCubes.js";
 
+import { createCourse } from "./course";
+import { createCloudFallback } from "./cloudFallback";
+
 type Stop = [number, number, number];
 const paint = [
   "#102bca",
@@ -156,23 +159,38 @@ function aircraft() {
 function cloudShape(variant: number) {
   const material = new T.MeshBasicMaterial(),
     surface = new MarchingCubes(27, material, false, false, 6500);
-  surface.isolation = 44;
+  surface.isolation = 0;
   const lobes = [
-    [-0.27, -0.04, 0.01, 0.62],
-    [-0.1, 0.066, 0, 0.68],
-    [0.065, 0.135, 0, 0.98],
-    [0.25, -0.01, 0, 0.65],
-    [-0.06, -0.09, 0.075, 0.61],
-    [0.12, -0.06, -0.09, 0.53],
+    [-0.5, -0.1, 0.03, 0.29],
+    [-0.28, 0.05, -0.02, 0.35],
+    [0.015, 0.17, 0.015, 0.4],
+    [0.34, 0.045, -0.02, 0.32],
+    [0.54, -0.11, 0.045, 0.245],
+    [-0.15, -0.14, 0.16, 0.29],
+    [0.18, -0.13, 0.12, 0.3],
   ];
-  for (const [x, y, z, power] of lobes)
-    surface.addBall(
-      0.5 + x,
-      0.49 + y + Math.sin(x * 14 + variant) * 0.027,
-      0.5 + z,
-      power,
-      10,
-    );
+  // A smooth union preserves the round crowns and avoids overlapping transparent shells.
+  const cells = surface.resolution;
+  for (let z = 0; z < cells; z++)
+    for (let y = 0; y < cells; y++)
+      for (let x = 0; x < cells; x++) {
+        const px = (x * 2) / cells - 1,
+          py = (y * 2) / cells - 1,
+          pz = (z * 2) / cells - 1;
+        let field = -5;
+        for (const [cx, cy, cz, r] of lobes) {
+          const sphere =
+            r -
+            Math.hypot(
+              px - cx,
+              py - cy - 0.075 * Math.sin(variant * 1.8 + cx * 6),
+              pz - cz,
+            );
+          const blend = Math.max(0.105 - Math.abs(field - sphere), 0);
+          field = Math.max(field, sphere) + (blend * blend) / 0.42;
+        }
+        surface.field[x + y * cells + z * cells * cells] = field;
+      }
   surface.update();
   const geometry = new T.BufferGeometry();
   for (const key of ["position", "normal"]) {
@@ -186,27 +204,38 @@ function cloudShape(variant: number) {
   material.dispose();
   return geometry;
 }
-function pathPoint(z: number, out = new T.Vector3()) {
-  return out.set(
-    6.8 * Math.sin(z * 0.026) + 3.1 * Math.sin(z * 0.058),
-    0.73 * Math.sin(z * 0.036),
-    -z,
-  );
-}
-
 /** Scroll drives distance along a continuous flight path. Camera, contrail and cloud banks share its coordinates. */
-export function flightWorld(canvas: HTMLCanvasElement, stops: number) {
-  const gl = new T.WebGLRenderer({
-    canvas,
-    alpha: true,
-    antialias: true,
-    powerPreference: "low-power",
-  });
-  gl.setClearColor(0, 0);
-  gl.setPixelRatio(Math.min(devicePixelRatio, 1.55));
+export function flightWorld(
+  canvas: HTMLCanvasElement,
+  fallbackCanvas: HTMLCanvasElement,
+  chapters: HTMLElement[],
+  stops: number,
+) {
+  const route = createCourse(stops),
+    camera = route.camera;
+  let gl: T.WebGLRenderer | null = null;
+  try {
+    const context = canvas.getContext("webgl2", {
+      alpha: true,
+      antialias: true,
+      powerPreference: "low-power",
+    });
+    if (context)
+      gl = new T.WebGLRenderer({
+        canvas,
+        context,
+        alpha: true,
+        antialias: true,
+      });
+  } catch {
+    /* The 2D renderer can use the same camera even when GPU initialization fails. */
+  }
+  gl?.setClearColor(0, 0);
+  gl?.setPixelRatio(Math.min(devicePixelRatio, 1.55));
   const scene = new T.Scene(),
-    camera = new T.PerspectiveCamera(41, 1, 0.13, 88),
-    plane = aircraft();
+    plane = aircraft(),
+    banks: T.Mesh[] = [];
+  let fallback: ReturnType<typeof createCloudFallback> | undefined;
   const fog = new T.FogExp2(0xa7acf0, 0.041);
   scene.fog = fog;
   const skyLight = new T.HemisphereLight(0xe1dcff, 0x374bb5, 1.6);
@@ -234,21 +263,23 @@ export function flightWorld(canvas: HTMLCanvasElement, stops: number) {
     `,
     );
   };
-  const course = (stops - 1) * 26;
+  const length = route.length;
   let seed = 731;
   const rand = () =>
     (seed = (Math.imul(1664525, seed) + 1013904223) >>> 0) / 4294967296;
-  for (let i = 0; i < Math.ceil((course + 110) / 5.6); i++) {
-    const d = i * 5.6 - 8,
-      center = pathPoint(d),
+  for (let i = 0; i < Math.ceil((length + 60) / 2.9); i++) {
+    const d = i * 2.9 - 6,
+      center = route.at(d, new T.Vector3()),
       m = new T.Mesh(clouds[i % 3], cloudMat);
     const side = i % 2 ? 1 : -1,
-      scale = 3.4 + rand() * 4.6;
-    m.position.set(
-      center.x + side * (6.9 + rand() * 10.2),
-      center.y + (rand() - 0.57) * 12,
-      -d,
-    );
+      scale = 1.8 + rand() * 4.4;
+    const near = i % 4 < 2;
+    const lateral = near ? 3.7 + rand() * 4.5 : 9 + rand() * 10;
+    const vertical = near
+      ? (i % 4 === 0 ? -1 : 1) * (1.5 + rand() * 2.0)
+      : (rand() - 0.48) * 12;
+    m.position.set(center.x + side * lateral, center.y + vertical, center.z);
+    banks.push(m);
     m.scale.set(
       scale * (1 + rand() * 0.52),
       scale * (0.65 + rand() * 0.3),
@@ -288,18 +319,21 @@ export function flightWorld(canvas: HTMLCanvasElement, stops: number) {
     target = new T.Vector3();
   let oldW = 0,
     oldH = 0;
+  const nose = new T.Vector3(),
+    nextHeading = new T.Vector3(),
+    heading = new T.Vector3(),
+    cross = new T.Vector3();
   function draw(progress: number, time: number, reduced: boolean) {
     const w = canvas.clientWidth,
       h = canvas.clientHeight;
     if (!w || !h) return;
     if (w !== oldW || h !== oldH) {
-      gl.setSize(w, h, false);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
+      gl?.setSize(w, h, false);
+      route.resize(w, h);
       oldW = w;
       oldH = h;
     }
-    const d = progress * 26,
+    const d = progress * route.step,
       base = Math.floor(progress),
       fraction = progress - base,
       next = Math.min(base + 1, stops - 1);
@@ -318,43 +352,43 @@ export function flightWorld(canvas: HTMLCanvasElement, stops: number) {
       "#" + horizon.getHexString(),
     );
     fog.color.copy(horizon);
-    pathPoint(d, plane.position);
-    const drift = reduced ? 0 : Math.sin(time * 0.00055) * 0.032;
-    plane.position.y += drift;
-    plane.rotation.set(
-      -0.04 * Math.cos(d * 0.036),
-      -Math.atan(0.177 * Math.cos(d * 0.026) + 0.18 * Math.cos(d * 0.058)),
-      reduced ? 0 : 0.27 * Math.sin(d * 0.045) + drift,
-    );
-    pathPoint(d - 9.8, camera.position);
-    camera.position.y += 1.55;
-    camera.position.x += 0.22 * Math.sin(d * 0.053);
-    pathPoint(d + 0.5, target);
-    target.y += w / h < 0.83 ? -0.95 : 0.02;
-    if (w / h >= 0.83) {
-      target.x -=
-        1.2 *
-        Math.cos(progress * Math.PI) *
-        Math.min(1, progress, stops - 1 - progress);
-    }
-    camera.lookAt(target);
-    camera.rotateZ(reduced ? 0 : 0.038 * Math.sin(d * 0.044));
-    if (w / h < 0.83) {
-      camera.fov = 55;
-      camera.updateProjectionMatrix();
-    } else if (camera.fov !== 41) {
-      camera.fov = 41;
-      camera.updateProjectionMatrix();
-    }
+    cloudMat.color.set(0xa1a9dc).lerp(horizon, 0.4);
+    skyLight.groundColor.set(0x374bb5).lerp(zenith, 0.25);
+    route.placeCamera(camera, progress);
+    route.projectChapters(chapters, progress, reduced);
+    // The pilot looks farther around the bend than the camera. Banking follows
+    // the change in heading, so the fuselage leads the camera into and out of each turn.
+    const lead = 8.1;
+    route.at(d + lead, plane.position);
+    route.at(d + lead + 5.8, nose);
+    route.at(d + lead + 12, nextHeading);
+    heading.subVectors(nose, plane.position).normalize();
+    nextHeading.sub(nose).normalize();
+    const yaw = Math.atan2(-heading.x, -heading.z);
+    const bank = reduced
+      ? 0
+      : T.MathUtils.clamp(
+          -heading.x * 0.76 - cross.crossVectors(heading, nextHeading).y * 0.95,
+          -0.68,
+          0.68,
+        );
+    plane.rotation.order = "YXZ";
+    plane.rotation.set(Math.asin(heading.y), yaw, bank);
+    plane.position.y += reduced ? 0 : Math.sin(time * 0.00069) * 0.047;
+    plane.scale.setScalar(w / h < 0.86 ? 0.38 : 0.48);
     for (let j = 0; j < n; j++) {
       const t = j / (n - 1);
-      pathPoint(d - 0.83 - t * 21, v);
+      route.at(d + lead - 0.84 - t * 17, v);
       v.y -= 0.015 + t * 0.41;
       const half = 0.013 + 0.34 * t * t;
       buffer.set([v.x - half, v.y, v.z, v.x + half, v.y, v.z], j * 6);
     }
     trailGeo.attributes.position.needsUpdate = true;
-    gl.render(scene, camera);
+    if (gl) gl.render(scene, camera);
+    else {
+      fallback ??= createCloudFallback(fallbackCanvas);
+      fallback.draw(camera, banks, plane, buffer, w, h);
+    }
   }
   function dispose() {
     const geometry = new Set<T.BufferGeometry>(),
@@ -370,7 +404,11 @@ export function flightWorld(canvas: HTMLCanvasElement, stops: number) {
     });
     geometry.forEach((g) => g.dispose());
     materials.forEach((m) => m.dispose());
-    gl.dispose();
+    gl?.dispose();
   }
-  return { draw, dispose };
+  function loseContext() {
+    gl?.dispose();
+    gl = null;
+  }
+  return { draw, dispose, loseContext, hardware: !!gl };
 }
