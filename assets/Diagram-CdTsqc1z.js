@@ -1,0 +1,1 @@
+import{j as r}from"./index-DBoHUy9F.js";import a from"./ArchitectureGuide-DoZBbCKi.js";import"./motion-0ZErMuir.js";import{p as o}from"./projects-DwoNVwfK.js";function c(){const i=o.find(t=>t.id===new URLSearchParams(location.search).get("diagram"));return r.jsx("main",{children:r.jsx(a,{initial:i})})}export{c as default};
