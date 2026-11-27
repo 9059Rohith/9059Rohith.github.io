@@ -1,4 +1,4 @@
-import { ScrollBackdrop } from "./ScrollBackdrop";
+import { projectModel, ScrollBackdrop } from "./ScrollBackdrop";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ScanLine } from "lucide-react";
 import Artwork from "./Artwork";
@@ -68,7 +68,7 @@ export default function ScreenSequence() {
         ref={stage}
         style={{ "--accent": p.accent } as React.CSSProperties}
       >
-        <ScrollBackdrop motif="ribbon" />
+        <ScrollBackdrop model={projectModel(p.id)} />
         <div className="screen-heading">
           <small>Interface walkthrough</small>
           <h2>{p.name}</h2>

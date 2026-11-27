@@ -1,4 +1,3 @@
-import { ScrollBackdrop } from "./ScrollBackdrop";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { useSequenceClock } from "./useSequenceClock";
 import { useId, useRef, useState } from "react";
@@ -333,7 +332,6 @@ export default function SystemTopology({
     H = 56;
   return (
     <div className="topology" data-tour={edge >= 0}>
-      <ScrollBackdrop motif="circuit" tone="paper" />
       <div className="topo-title">
         <div>
           <small>System context</small>

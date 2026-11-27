@@ -120,7 +120,7 @@ export default function Capabilities() {
   const items = groups[g].items;
   return (
     <section id="capabilities" className="section compact">
-      <ScrollBackdrop motif="circuit" tone="dark" reverse />
+      <ScrollBackdrop model="life-os" tone="dark" reverse />
       <div className="kicker">Technical capabilities</div>
       <h2>The working stack.</h2>
       <div className="tabs">

@@ -121,7 +121,7 @@ export default function DropTest() {
   }, []);
   return (
     <section className="drop-test section">
-      <ScrollBackdrop motif="rings" tone="dark" />
+      <ScrollBackdrop model="vaakmitra" tone="dark" />
       <div className="drop-copy">
         <div className="kicker">Interactive simulation</div>
         <h2>Drop test.</h2>

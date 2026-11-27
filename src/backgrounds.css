@@ -1,197 +1,255 @@
-/* Each atmosphere clips its own oversized planes. Content and hit targets sit above them. */
+/* Each scene uses the same photographed 3D set for its still and scrubbed poses. */
+:where(section, footer, div, a):has(> .scroll-field) {
+  isolation: isolate;
+}
 :where(
   section:has(> .scroll-field),
   footer:has(> .scroll-field),
-  div:has(> .scroll-field)
+  div:has(> .scroll-field),
+  a:has(> .scroll-field)
 ) {
   position: relative;
-  isolation: isolate;
 }
 .scroll-field {
-  --field-x: 0px;
-  --field-y: 0px;
-  --field-far: 0px;
-  --field-tilt: 0deg;
-  --ink: 235 189 135;
-  --glow: 203 119 56;
-  --cool: 127 158 142;
-  --edge-opacity: 0.48;
-  --middle-opacity: 0.17;
-  --quiet-opacity: 0.065;
-  --field-width: clamp(780px, 105vw, 1750px);
+  --scene-width: clamp(180px, 25vw, 440px);
+  --spot: 170 127 82;
   position: absolute;
   inset: 0;
   overflow: hidden;
-  overflow: clip;
-  contain: strict;
   pointer-events: none;
   user-select: none;
   z-index: -2;
+  background: radial-gradient(
+    ellipse 61% 56% at 100% 10%,
+    rgb(var(--spot) / 0.15),
+    transparent 82%
+  );
 }
-.scroll-field[data-tone="paper"] {
-  --ink: 117 85 50;
-  --glow: 187 141 75;
-  --cool: 115 134 102;
-  --edge-opacity: 0.39;
-  --middle-opacity: 0.17;
-  --quiet-opacity: 0.058;
+.scroll-field[data-model="vaakmitra"] {
+  --spot: 167 107 97;
 }
-.scroll-field[data-tone="olive"] {
-  --ink: 204 217 160;
-  --glow: 143 161 105;
-  --cool: 168 119 73;
+.scroll-field[data-model="life-os"] {
+  --spot: 103 151 127;
 }
-.scroll-field[data-tone="desk"] {
-  --ink: 249 217 157;
-  --glow: 231 172 94;
-  --cool: 135 160 118;
-  --edge-opacity: 0.16;
+.scroll-field[data-model="skylark"] {
+  --spot: 110 150 150;
 }
-.scroll-field > i {
+.model-turntable {
   position: absolute;
   display: block;
-  pointer-events: none;
+  right: 4%;
+  top: 12px;
+  width: var(--scene-width);
+  aspect-ratio: 10/7;
+  background: var(--still) center/100% 100% no-repeat;
 }
-.field-drawing {
-  inset: -130px -74px;
+.scroll-field[data-loaded] > .model-turntable {
+  background-image: var(--turn);
+  background-size: 700% 600%;
+  background-position: var(--frame-x, 50%) var(--frame-y, 40%);
+}
+/* Give the models a clear header bay before dense lists and galleries begin. */
+.internships,
+.project-index {
+  --header-bay: clamp(235px, 23vw, 320px);
+}
+:is(.internships, .project-index) > .scroll-field {
+  --scene-width: clamp(290px, 34vw, 510px);
+}
+:is(.internships, .project-index) .model-turntable {
+  top: 6px;
+  right: 7%;
+}
+:is(.internships, .project-index) > h2 {
+  min-height: calc(var(--header-bay) - 125px);
+}
+.project-shot {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  padding: 0;
   background: linear-gradient(
-    103deg,
-    rgb(var(--ink) / var(--middle-opacity)),
-    rgb(var(--ink) / var(--quiet-opacity)) 23%,
-    rgb(var(--ink) / var(--quiet-opacity)) 43%,
-    rgb(var(--ink) / var(--edge-opacity)) 86%,
-    rgb(var(--ink) / var(--middle-opacity))
+    135deg,
+    color-mix(in srgb, var(--tone) 40%, #282d29),
+    color-mix(in srgb, var(--tone) 25%, #181c19)
   );
-  -webkit-mask: var(--field-mask) 50% 50% / var(--field-width) auto repeat;
-  mask: var(--field-mask) 50% 50% / var(--field-width) auto repeat;
-  transform: translate3d(var(--field-x), var(--field-y), 0);
 }
-.scroll-field[data-reverse="true"] .field-drawing {
-  scale: -1 1;
+.project-shot > .scroll-field {
+  z-index: 1;
+  background: none;
 }
-.field-light {
-  inset: -100px -80px;
-  background:
-    radial-gradient(
-      ellipse 48% 42% at 91% 26%,
-      rgb(var(--glow) / 0.25),
-      transparent 90%
-    ),
-    radial-gradient(
-      ellipse 33% 45% at 7% 89%,
-      rgb(var(--cool) / 0.13),
-      transparent 90%
-    );
-  transform: translate3d(calc(var(--field-x) * -0.6), var(--field-far), 0)
-    rotate(var(--field-tilt));
+.project-shot .model-turntable {
+  right: auto;
+  left: -5%;
+  top: auto;
+  bottom: 0;
+  width: 65%;
 }
-.field-dust {
-  inset: -65px -60px;
-  opacity: 0.18;
-  background-image:
-    radial-gradient(circle, rgb(var(--ink) / 0.9) 0.9px, transparent 1.25px),
-    radial-gradient(circle, rgb(var(--ink) / 0.6) 0.65px, transparent 1px);
-  background-size:
-    55px 57px,
-    87px 97px;
-  background-position:
-    4px 18px,
-    33px 7px;
-  mask-image: linear-gradient(
-    115deg,
-    #000 0%,
-    transparent 29%,
-    transparent 58%,
-    #000 100%
-  );
-  transform: translate3d(calc(var(--field-x) * -0.85), var(--field-far), 0);
+.project-shot img {
+  position: absolute;
+  top: 11%;
+  left: 40%;
+  width: 87%;
+  max-width: none;
+  transform: perspective(860px) rotateY(-12deg) rotateZ(3deg);
+  transform-origin: 10% 60%;
 }
-.scroll-field[data-motif="circuit"] {
-  --cool: 99 145 124;
+.project-shot:hover img,
+.project-shot:focus-visible img {
+  transform: perspective(860px) rotateY(-6deg) rotateZ(1deg) translateY(-2%);
 }
-.scroll-field[data-motif="ribbon"] {
-  --ink: 233 176 124;
-  --field-width: clamp(740px, 94vw, 1490px);
+.atlas > .scroll-field {
+  --scene-width: clamp(200px, 21vw, 340px);
 }
-.scroll-field[data-tone="paper"][data-motif="ribbon"] {
-  --ink: 122 97 69;
+.atlas > .scroll-field .model-turntable {
+  right: 1.5%;
+  top: 10px;
 }
-.scroll-field[data-motif="lattice"] {
-  --field-width: clamp(850px, 112vw, 1810px);
+.atlas > .atlas-heading {
+  padding-right: clamp(140px, 16.5vw, 275px);
 }
-.scroll-field[data-motif="orbit"] {
-  --ink: 213 197 153;
-  --cool: 104 147 138;
+.section.compact > .scroll-field .model-turntable,
+.research > .scroll-field .model-turntable {
+  width: clamp(170px, 18vw, 290px);
+  top: 14px;
+  right: 5%;
 }
-.scroll-field[data-tone="paper"][data-motif="orbit"] {
-  --ink: 115 105 70;
+.section.compact > h2,
+.research > h2 {
+  padding-right: clamp(145px, 17vw, 245px);
 }
-.scroll-field[data-motif="light"] .field-drawing {
-  display: none;
+.section.compact > .section-title {
+  padding-right: clamp(145px, 17vw, 245px);
 }
-.scene-shade > .scroll-field {
+.editorial > .scroll-field .model-turntable {
+  left: 4.5%;
+  right: auto;
+  top: auto;
+  bottom: 2%;
+  width: clamp(170px, 21vw, 310px);
+}
+.section.editorial > div:first-of-type {
+  padding-bottom: clamp(145px, 15vw, 210px);
+}
+.screen-stage > .scroll-field .model-turntable {
+  width: clamp(130px, 17vw, 255px);
+  right: 4%;
+  top: 55px;
+}
+.signal-lab > .scroll-field .model-turntable,
+.drop-test > .scroll-field .model-turntable {
+  right: -3%;
+  top: 0;
+  opacity: 0.19;
+}
+.case-poster > .scroll-field {
   z-index: 0;
 }
-.scene-shade .field-light {
-  background: linear-gradient(
-    115deg,
-    transparent 15%,
-    #fff1cc0a 31%,
-    #ffedb324 37%,
-    transparent 53%,
-    transparent 68%,
-    #ffe9bb0e 75%,
-    transparent 83%
-  );
+.case-poster > .scroll-field .model-turntable {
+  width: clamp(330px, 43vw, 790px);
+  right: 3%;
+  top: 17%;
 }
-.scene-shade .field-dust {
-  opacity: 0.095;
+.case-poster .case-visual {
+  opacity: 0.27;
 }
-.topology > .scroll-field,
-.system-map > .scroll-field,
-.walk-intro > .scroll-field,
-.design-why > .scroll-field {
-  --edge-opacity: 0.19;
-  --middle-opacity: 0.085;
-  --quiet-opacity: 0.024;
+.case-caption {
+  position: relative;
+  z-index: 1;
 }
-.atlas-sheet .field-light {
-  opacity: 0.56;
+.case > .scroll-field .model-turntable {
+  right: -5%;
+  top: auto;
+  bottom: 0;
+  opacity: 0.15;
 }
-.request-player > .scroll-field {
-  --edge-opacity: 0.23;
-  --quiet-opacity: 0.03;
+.next > .scroll-field .model-turntable {
+  width: 150px;
+  top: 50%;
+  transform: translateY(-50%);
 }
-.screen-stage > .scroll-field {
-  --edge-opacity: 0.39;
-  --quiet-opacity: 0.07;
+.next > a {
+  position: relative;
+  display: inline-flex;
+  max-width: calc(100% - 126px);
 }
-footer > .scroll-field {
-  --edge-opacity: 0.4;
-  --middle-opacity: 0.13;
-}
-@media (max-width: 650px) {
-  .scroll-field {
-    --field-width: 700px;
-    --middle-opacity: 0.13;
-    --quiet-opacity: 0.045;
+@media (max-width: 760px) {
+  :is(.internships, .project-index) {
+    --header-bay: 150px;
   }
-  .scroll-field[data-motif="ribbon"],
-  .scroll-field[data-motif="lattice"] {
-    --field-width: 740px;
+  :is(.internships, .project-index) > .scroll-field .model-turntable {
+    width: clamp(125px, 35vw, 225px);
+    right: 0;
+    top: 12px;
   }
-  .field-drawing {
-    mask-position: 65% center;
-    -webkit-mask-position: 65% center;
+  :is(.internships, .project-index) > h2 {
+    font-size: clamp(41px, 9vw, 63px);
   }
-  .scroll-field .field-light {
-    opacity: 0.75;
+  .section.compact > .scroll-field .model-turntable,
+  .research > .scroll-field .model-turntable {
+    width: 100px;
+    right: 0;
+    top: 3px;
+  }
+  .section.compact > h2,
+  .research > h2 {
+    padding-right: 66px;
+  }
+  .section.compact > .section-title {
+    padding-right: 0;
+  }
+  .section.compact:has(.section-title) > .scroll-field .model-turntable {
+    width: 80px;
+    top: 0;
+    right: -5px;
+  }
+  .atlas > .atlas-heading {
+    padding-right: 0;
+  }
+  .atlas > .atlas-heading h2 {
+    padding-right: 65px;
+  }
+  .atlas > .scroll-field .model-turntable {
+    width: 112px;
+    top: 2px;
+    right: -4px;
+  }
+  .screen-stage > .scroll-field .model-turntable {
+    width: 112px;
+    right: 0;
+    top: 54px;
+  }
+  .editorial > .scroll-field .model-turntable {
+    width: 118px;
+    left: auto;
+    right: 0;
+    bottom: auto;
+    top: 0;
+  }
+  .section.editorial > div:first-of-type {
+    padding-bottom: 0;
+    padding-right: 65px;
+  }
+  .case-poster > .scroll-field .model-turntable {
+    width: clamp(175px, 49vw, 330px);
+    top: 8%;
+    right: 1%;
+  }
+  .next > .scroll-field .model-turntable {
+    width: 92px;
+  }
+  .next > a {
+    max-width: calc(100% - 76px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .scroll-field > .field-drawing,
-  .scroll-field > .field-light,
-  .scroll-field > .field-dust {
+  .scroll-field[data-loaded] > .model-turntable {
+    background: var(--still) center/100% 100% no-repeat;
+  }
+  .project-shot img,
+  .project-shot:hover img,
+  .project-shot:focus-visible img {
     transform: none;
+    transition: none;
   }
 }

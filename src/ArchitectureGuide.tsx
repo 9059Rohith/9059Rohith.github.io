@@ -1,4 +1,4 @@
-import { ScrollBackdrop } from "./ScrollBackdrop";
+import { projectModel, ScrollBackdrop } from "./ScrollBackdrop";
 import { useSequenceClock } from "./useSequenceClock";
 import SystemTopology from "./SystemTopology";
 import { useEffect, useRef, useState } from "react";
@@ -51,7 +51,6 @@ function Overview({
 }) {
   return (
     <div className="system-map" aria-label="System overview diagram">
-      <ScrollBackdrop motif="lattice" tone="paper" reverse />
       {flows.map((f, i) => (
         <article key={f.name} className="map-lane">
           <div className="lane-head">
@@ -238,7 +237,7 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
   }
   return (
     <section className="section atlas" id="architecture">
-      <ScrollBackdrop motif="circuit" tone="paper" />
+      <ScrollBackdrop model={projectModel(project.id)} tone="paper" />
       <div className="atlas-heading">
         <div>
           <div className="kicker">System design</div>
@@ -268,7 +267,6 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
         style={{ "--system-color": project.accent } as React.CSSProperties}
       >
         <div className="system-brief">
-          <ScrollBackdrop motif="circuit" tone="olive" />
           <small>{project.kind}</small>
           <h3>{project.name}</h3>
           <p>{design.summary}</p>
@@ -341,7 +339,6 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
           ) : (
             <>
               <div className="walk-intro">
-                <ScrollBackdrop motif="orbit" tone="paper" />
                 <button
                   className="back-to-map"
                   onClick={() => chooseFlow(-1, 0, project, true)}
@@ -360,7 +357,6 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
                 data-playing={playing}
                 data-finished={finished}
               >
-                <ScrollBackdrop motif="ribbon" tone="olive" />
                 <div className="player-head">
                   <span>Request playback</span>
                   <b>
@@ -580,7 +576,6 @@ export default function ArchitectureGuide({ initial }: { initial?: Project }) {
           )}
         </div>
         <div className="design-why">
-          <ScrollBackdrop motif="terrain" tone="paper" />
           <small>Engineering decision</small>
           <p>{design.reason}</p>
           <p>{project.tradeoff}</p>

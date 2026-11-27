@@ -1,4 +1,4 @@
-import { ScrollBackdrop } from "./ScrollBackdrop";
+import { projectModel, ScrollBackdrop } from "./ScrollBackdrop";
 import { InternshipSignal } from "./PortfolioMotion";
 import {
   ArrowUpRight,
@@ -46,7 +46,7 @@ const roles = [
 export function Internships() {
   return (
     <section className="section internships" id="internships">
-      <ScrollBackdrop motif="terrain" tone="paper" />
+      <ScrollBackdrop model="udhyogapay" tone="paper" />
       <div className="section-label">Professional experience</div>
       <h2>Internships</h2>
       <div className="intern-list">
@@ -78,7 +78,7 @@ export function Internships() {
 export function ProjectIndex() {
   return (
     <section className="section project-index" id="work">
-      <ScrollBackdrop motif="circuit" tone="dark" />
+      <ScrollBackdrop model="life-os" tone="dark" />
       <div className="section-label">Selected engineering work</div>
       <h2>Projects</h2>
       <div className="project-gallery">
@@ -92,6 +92,7 @@ export function ProjectIndex() {
               href={"/projects/" + p.id + "/"}
               aria-label={"Open " + p.name + " case study"}
             >
+              <ScrollBackdrop model={projectModel(p.id)} />
               <img
                 src={"/studio/" + p.id + ".webp"}
                 width={1140}

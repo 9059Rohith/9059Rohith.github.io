@@ -1,142 +1,175 @@
 import { useEffect, type CSSProperties } from "react";
 
-type Motif =
-  | "terrain"
-  | "circuit"
-  | "ribbon"
-  | "orbit"
-  | "lattice"
-  | "rings"
-  | "light";
-const round = (value: number) => Number(value.toFixed(1));
+type Model = "udhyogapay" | "vaakmitra" | "life-os" | "skylark";
 
-/** Keep the drawing in a clipped, non-interactive layer underneath the section's readable content. */
+/** Match each case study to its own photographed miniature, including links opened directly. */
+export function projectModel(id: string): Model {
+  return id === "udhyogapay" || id === "vaakmitra" || id === "skylark"
+    ? id
+    : "life-os";
+}
+
+/** Give each scene a static product photograph until its turntable has decoded. */
 export function ScrollBackdrop({
-  motif,
+  model,
   tone = "dark",
   reverse = false,
 }: {
-  motif: Motif;
-  tone?: "dark" | "paper" | "olive" | "desk";
+  model: Model;
+  tone?: "dark" | "paper" | "olive";
   reverse?: boolean;
 }) {
   return (
     <span
       className="scroll-field"
-      data-motif={motif}
+      data-model={model}
       data-tone={tone}
       data-reverse={reverse}
       aria-hidden="true"
       style={
         {
-          "--field-mask":
-            motif === "light" ? "none" : `url(/fields/${motif}.svg)`,
+          "--still": `url("/miniatures/${model}.webp")`,
+          "--turn": `url("/miniatures/${model}-turn.webp")`,
         } as CSSProperties
       }
     >
-      <i className="field-light" />
-      <i className="field-drawing" />
-      <i className="field-dust" />
+      <span className="model-turntable" />
     </span>
   );
 }
 
-/** Drive only visible surfaces from native scroll position. Pinned scenes use their full scroll rail as the timeline. */
+/** Scrub the baked 3D camera and mechanism poses with scroll, sharing four atlases across the entire site. */
 export function useScrollBackdrops() {
   useEffect(() => {
     const root = document.getElementById("root");
     if (!root) return;
-    const registered = new Set<HTMLElement>(),
-      visible = new Set<HTMLElement>(),
-      media = matchMedia("(prefers-reduced-motion: reduce)");
-    let raf = 0;
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
+    const visible = new Set<HTMLElement>(),
+      registered = new Set<HTMLElement>();
+    const atlases = new Map<string, Promise<void>>();
+    let frame = 0,
+      disposed = false;
+    function load(field: HTMLElement) {
+      const model = field.dataset.model!;
+      if (motion.matches || field.dataset.loaded === model) return;
+      let promise = atlases.get(model);
+      if (!promise) {
+        const img = new Image();
+        img.src = "/miniatures/" + model + "-turn.webp";
+        promise = img.decode();
+        atlases.set(model, promise);
+      }
+      promise
+        .then(() => {
+          if (disposed || !field.isConnected || model !== field.dataset.model)
+            return;
+          field.dataset.loaded = model;
+          schedule();
+        })
+        .catch(() => {
+          atlases.delete(model);
+        });
+    }
     function update() {
-      raf = 0;
-      const vh = document.documentElement.clientHeight;
+      frame = 0;
+      const height = document.documentElement.clientHeight;
       const poses = Array.from(visible, (field) => {
-        const rail = field.closest(".studio-rail,.screen-rail");
-        const r = (rail ?? field).getBoundingClientRect();
-        const progress = media.matches
-          ? 0.5
-          : Math.max(
-              0,
-              Math.min(
-                1,
-                rail
-                  ? -r.top / Math.max(1, r.height - vh)
-                  : (vh - r.top) / Math.max(1, vh + r.height),
-              ),
-            );
-        const p = (progress - 0.5) * 2,
-          direction = field.dataset.reverse === "true" ? -1 : 1;
-        return { field, p, direction };
+        const stage = field.querySelector<HTMLElement>(".model-turntable")!;
+        const rail = field.closest(".screen-rail");
+        const rect = (rail || stage).getBoundingClientRect();
+        const progress = rail
+          ? -rect.top / Math.max(1, rect.height - height)
+          : (height - rect.top) / (height + rect.height);
+        const t = motion.matches ? 0.5 : Math.min(1, Math.max(0, progress));
+        return {
+          field,
+          index: Math.round(
+            (field.dataset.reverse === "true" ? 1 - t : t) * 41,
+          ),
+        };
       });
-      for (const { field, p, direction } of poses) {
-        field.style.setProperty("--field-x", round(p * 56 * direction) + "px");
-        field.style.setProperty("--field-y", round(p * 112) + "px");
-        field.style.setProperty("--field-far", round(p * -42) + "px");
-        field.style.setProperty(
-          "--field-tilt",
-          round(p * 3.4 * direction) + "deg",
-        );
+      for (const { field, index } of poses) {
+        if (field.dataset.frame === String(index)) continue;
+        field.dataset.frame = String(index);
+        field.style.setProperty("--frame-x", ((index % 7) * 100) / 6 + "%");
+        field.style.setProperty("--frame-y", Math.floor(index / 7) * 20 + "%");
       }
     }
     function schedule() {
-      if (!raf && !document.hidden) raf = requestAnimationFrame(update);
+      if (!frame && !document.hidden) frame = requestAnimationFrame(update);
     }
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const e of entries) {
-          const field = e.target as HTMLElement;
-          if (e.isIntersecting) visible.add(field);
-          else visible.delete(field);
+        for (const entry of entries) {
+          const field = entry.target.parentElement!;
+          if (entry.isIntersecting) {
+            visible.add(field);
+            load(field);
+          } else visible.delete(field);
         }
         schedule();
       },
-      { rootMargin: "100px 0px" },
+      { rootMargin: "180px 0px" },
     );
     function scan() {
       for (const field of registered)
         if (!field.isConnected) {
-          observer.unobserve(field);
+          observer.unobserve(field.firstElementChild!);
           registered.delete(field);
           visible.delete(field);
         }
-      for (const el of root!.querySelectorAll<HTMLElement>(".scroll-field"))
-        if (!registered.has(el)) {
-          registered.add(el);
-          observer.observe(el);
+      for (const field of root!.querySelectorAll<HTMLElement>(".scroll-field"))
+        if (!registered.has(field)) {
+          registered.add(field);
+          observer.observe(field.firstElementChild!);
         }
       schedule();
     }
-    const mutation = new MutationObserver((records) => {
+    const changes = new MutationObserver((records) => {
+      for (const record of records)
+        if (record.type === "attributes") {
+          const field = record.target as HTMLElement;
+          delete field.dataset.loaded;
+          if (visible.has(field)) load(field);
+        }
       if (
-        records.some((r) =>
-          [...r.addedNodes, ...r.removedNodes].some(
-            (n) =>
-              n instanceof Element &&
-              (n.matches(".scroll-field") || n.querySelector(".scroll-field")),
+        records.some((record) =>
+          [...record.addedNodes, ...record.removedNodes].some(
+            (node) =>
+              node instanceof Element &&
+              (node.matches(".scroll-field") ||
+                node.querySelector(".scroll-field")),
           ),
         )
       )
         scan();
     });
     scan();
-    mutation.observe(root, { childList: true, subtree: true });
-    function onScroll() {
-      if (!media.matches) schedule();
+    changes.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-model"],
+    });
+    function scroll() {
+      if (!motion.matches) schedule();
     }
-    window.addEventListener("scroll", onScroll, { passive: true });
+    function preference() {
+      visible.forEach(load);
+      schedule();
+    }
+    window.addEventListener("scroll", scroll, { passive: true });
     window.addEventListener("resize", schedule);
-    media.addEventListener("change", schedule);
+    motion.addEventListener("change", preference);
     document.addEventListener("visibilitychange", schedule);
     return () => {
-      cancelAnimationFrame(raf);
-      mutation.disconnect();
+      disposed = true;
+      cancelAnimationFrame(frame);
       observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
+      changes.disconnect();
+      motion.removeEventListener("change", preference);
+      window.removeEventListener("scroll", scroll);
       window.removeEventListener("resize", schedule);
-      media.removeEventListener("change", schedule);
       document.removeEventListener("visibilitychange", schedule);
     };
   }, []);
